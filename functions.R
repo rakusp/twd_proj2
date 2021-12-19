@@ -14,7 +14,7 @@ fix_streaming <- function(streaming_history_df) {
   streaming_history_df %>% 
     mutate(msPlayed = as.numeric(msPlayed)) %>% 
     tidyr::separate(endTime, c("year", "month", "day", "hour", "minute"),
-                    "[: -]") %>% 
+                    "[: -]", remove=FALSE) %>% 
     mutate(
       year = as.numeric(year),
       month = as.numeric(month),
