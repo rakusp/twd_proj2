@@ -2,6 +2,7 @@ library(shiny)
 library(dplyr)
 library(plotly)
 library(ggplot2)
+library(DT)
 
 source("functions.R")
 
@@ -47,15 +48,37 @@ ui2 <- fluidPage(
                   "Wybierz kategorię:",
                   c("Wykonawcy","Utwory"))),
       mainPanel(
-        plotOutput("plot2"),
-        shiny::tableOutput("table")
+        tabsetPanel(
+        tabPanel("Wykres",plotly::plotlyOutput("plot2")),
+        tabPanel("Tabela",
+                 tags$button(
+                   id = "button_l",
+                   class = "btn action_button",
+                   img(src = "https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A",
+                       height = "175px")
+                 ),
+                 tags$button(
+                   id = "button_j",
+                   class = "btn action_button",
+                   img(src = "https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD",
+                       height = "175px")
+                 ),
+                 tags$button(
+                   id = "button_p",
+                   class = "btn action_button",
+                   img(src = "https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921",
+                       height = "175px")
+                 )
+                
+        )
       )
   )
-  
+  )
 )
+  
 
 server <- function(input, output) {
-
+  
     output$plot1 <- renderPlot({
         p <- streaming %>% 
             filter(user %in% input$who) %>% 
@@ -81,7 +104,7 @@ server <- function(input, output) {
         p
     })
     
-    output$plot2 <- renderPlot({
+    output$plot2 <- plotly::renderPlotly({
       if(input$kategoria == "Wykonawcy"){
         
         p <- p_streaming %>% group_by(artistName) %>% 
@@ -106,7 +129,7 @@ server <- function(input, output) {
           ) +
           theme(panel.grid.major.y = element_line(linetype=5),
                 panel.grid.minor.y = element_blank(),
-                panel.grid.minor.x = element_blank())
+                panel.grid.minor.x = element_blank()) + coord_flip()
         
         
       }else if(input$kategoria == "Utwory"){
@@ -132,54 +155,20 @@ server <- function(input, output) {
           ) +
           theme(panel.grid.major.y = element_line(linetype=5),
                 panel.grid.minor.y = element_blank(),
-                panel.grid.minor.x = element_blank())
-        
-      }
+                panel.grid.minor.x = element_blank()) + coord_flip()
+        }
     })
     
-    output$table <- shiny::renderTable({if(input$kategoria == "Wykonawcy"){
-      
-      p <- p_streaming %>% group_by(artistName) %>% 
-        summarise(minutes = sum(msPlayed)/60000) %>%
-        arrange(-minutes) %>% head(3)
-      
-      j <- j_streaming %>% group_by(artistName) %>% 
-        summarise(minutes = sum(msPlayed)/60000) %>%
-        arrange(-minutes) %>% head(3)
-      
-      l <- l_streaming %>% group_by(artistName) %>% 
-        summarise(minutes = sum(msPlayed)/60000) %>%
-        arrange(-minutes) %>% head(3)
-      
-      bind_rows("p"=p, "j"=j, "l"=l,
-                             .id="user")
     
-      
-      
-    }else if(input$kategoria == "Utwory"){
-      p <- p_streaming %>% group_by(trackName) %>% 
-        summarise(minutes = sum(msPlayed)/60000) %>%
-        arrange(-minutes) %>% head(3)
-      
-      j <- j_streaming %>% group_by(trackName) %>% 
-        summarise(minutes = sum(msPlayed)/60000) %>%
-        arrange(-minutes) %>% head(3)
-      
-      l <- l_streaming %>% group_by(trackName) %>% 
-        summarise(minutes = sum(msPlayed)/60000) %>%
-        arrange(-minutes) %>% head(3)
-      
-      bind_rows("p"=p, "j"=j, "l"=l,
-                             .id="user")
-      
-    }})
+    
+    
     
 }
 
 app_ui <- navbarPage(
     title="Spotify",
-    tabPanel("Godziny słuchania", ui1),
-    tabPanel("Najczęściej słuchane", ui2),
+    tabPanel("Godziny słuchania", ui1, icon = icon("clock")),
+    tabPanel("Najczęściej słuchane", ui2, icon = icon("heart")),
 )
 
 shinyApp(ui = app_ui, server = server)
