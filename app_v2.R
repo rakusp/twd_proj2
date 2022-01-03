@@ -51,33 +51,86 @@ ui2 <- fluidPage(
         tabsetPanel(
         tabPanel("Wykres",plotly::plotlyOutput("plot2")),
         tabPanel("Tabela",
-                 tags$button(
-                   id = "button_l",
-                   class = "btn action_button",
-                   img(src = "https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A",
-                       height = "175px")
-                 ),
-                 tags$button(
-                   id = "button_j",
-                   class = "btn action_button",
-                   img(src = "https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD",
-                       height = "175px")
-                 ),
-                 tags$button(
-                   id = "button_p",
-                   class = "btn action_button",
-                   img(src = "https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921",
-                       height = "175px")
+                 fluidRow(
+                   actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
+                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921');  background-size: cover; background-position: center;"),
+                   actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
+                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A');  background-size: cover; background-position: center;"),
+                   actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
+                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD');  background-size: cover; background-position: center;"),
+                   textOutput("kto"),
+                   dataTableOutput("tabela")
+                 )
                  )
                 
         )
       )
   )
   )
-)
   
 
 server <- function(input, output) {
+  
+  observeEvent(input$kategoria, {output$tabela <- renderDataTable({})
+  output$kto <- renderText({""})})
+  
+  
+  observeEvent(input$button_l,{
+    output$kto <- renderText({"Łukasz"})
+    if(input$kategoria == "Wykonawcy"){
+      output$tabela <- renderDataTable({
+        l_streaming %>% group_by(artistName) %>% 
+          summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
+          arrange(-`Przesłuchane minuty`)
+    })
+    }else if(input$kategoria == "Utwory"){
+      output$tabela <- renderDataTable({
+        l_streaming %>% group_by(trackName) %>% 
+          summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
+          arrange(-`Przesłuchane minuty`)
+        })
+      }
+    })
+  
+  
+  observeEvent(input$button_p,{
+    output$kto <- renderText({"Patryk"})
+    if(input$kategoria == "Wykonawcy"){
+      output$tabela <- renderDataTable({
+        p_streaming %>% group_by(artistName) %>% 
+          summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
+          arrange(-`Przesłuchane minuty`)
+      })
+    }else if(input$kategoria == "Utwory"){
+      output$tabela <- renderDataTable({
+        p_streaming %>% group_by(trackName) %>% 
+          summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
+          arrange(-`Przesłuchane minuty`)
+      })
+    }
+  })
+  
+  observeEvent(input$button_j,{
+    output$kto <- renderText({"Janek"})
+    if(input$kategoria == "Wykonawcy"){
+      output$tabela <- renderDataTable({
+        j_streaming %>% group_by(artistName) %>% 
+          summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
+          arrange(-`Przesłuchane minuty`)
+      })
+    }else if(input$kategoria == "Utwory"){
+      output$tabela <- renderDataTable({
+        j_streaming %>% group_by(trackName) %>% 
+          summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
+          arrange(-`Przesłuchane minuty`)
+      })
+    }
+  })
+  
+  
+  
+  
+  
   
     output$plot1 <- renderPlot({
         p <- streaming %>% 
