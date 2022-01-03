@@ -81,6 +81,14 @@ ui2 <- fluidPage(
       )
   )
   )
+
+ui3 <- fluidPage(
+  titlePanel("Zgodność muzycznych preferencji"),
+      tabsetPanel(
+        tabPanel("Utwory", plotOutput("plot4")),
+        tabPanel("Artyści", plotOutput("plot5"))
+      )
+)
   
 
 server <- function(input, output) {
@@ -140,10 +148,6 @@ server <- function(input, output) {
       })
     }
   })
-  
-  
-  
-  
   
   
     output$plot1 <- renderPlot({
@@ -249,6 +253,82 @@ server <- function(input, output) {
     })
     
     
+    output$plot4 <- renderPlot({
+      p <- p_streaming %>% select(trackName, artistName) %>% 
+        unique()
+      l <- l_streaming %>% select(trackName, artistName) %>% 
+        unique()
+      j <- j_streaming %>% select(trackName, artistName) %>% 
+        unique()
+      
+      pl_len <- dim(full_join(p, l))[1]
+      pj_len <- dim(full_join(p, j))[1]
+      lj_len <- dim(full_join(l, j))[1]
+      
+      pl_common_len <- dim(inner_join(p, l))[1]
+      pj_common_len <- dim(inner_join(p, j))[1]
+      lj_common_len <- dim(inner_join(l, j))[1]
+      
+      df <- data.frame(who=c("Patryk i Łukasz", "Patryk i Janek", "Łukasz i Janek"),
+                       perc=c(pl_common_len/pl_len*100,
+                              pj_common_len/pj_len*100,
+                              lj_common_len/lj_len*100))
+      
+      
+      df %>% 
+        ggplot() +
+        geom_col(aes(x=who, y=perc), fill="lightblue") +
+        theme_bw() +
+        labs(
+          title="Procent wspólnych utworów",
+          x="Pomiędzy kim",
+          y="Procent zgodności"
+        ) +
+        scale_y_continuous(expand=expansion(add=c(0, 0.0058)),
+                           limits=c(0, 20)) +
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    })
+    
+    output$plot5 <- renderPlot({
+      p <- p_streaming %>% select(artistName) %>% 
+        unique()
+      l <- l_streaming %>% select(artistName) %>% 
+        unique()
+      j <- j_streaming %>% select(artistName) %>% 
+        unique()
+      
+      pl_len <- dim(full_join(p, l))[1]
+      pj_len <- dim(full_join(p, j))[1]
+      lj_len <- dim(full_join(l, j))[1]
+      
+      pl_common_len <- dim(inner_join(p, l))[1]
+      pj_common_len <- dim(inner_join(p, j))[1]
+      lj_common_len <- dim(inner_join(l, j))[1]
+      
+      df <- data.frame(who=c("Patryk i Łukasz", "Patryk i Janek", "Łukasz i Janek"),
+                       perc=c(pl_common_len/pl_len*100,
+                              pj_common_len/pj_len*100,
+                              lj_common_len/lj_len*100))
+      
+      
+      df %>% 
+        ggplot() +
+        geom_col(aes(x=who, y=perc), fill="lightblue") +
+        theme_bw() +
+        labs(
+          title="Procent wspólnych artystów",
+          x="Pomiędzy kim",
+          y="Procent zgodności"
+        ) + 
+        scale_y_continuous(expand=expansion(add=c(0, 0.0058)),
+                               limits=c(0, 20)) +
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    })
+    
     
     
     
@@ -258,6 +338,7 @@ app_ui <- navbarPage(
     title="Spotify",
     tabPanel("Godziny słuchania", ui1, icon = icon("clock")),
     tabPanel("Najczęściej słuchane", ui2, icon = icon("heart")),
+    tabPanel("Zgodność muzyki", ui3, icon = icon("handshake"))
 )
 
 shinyApp(ui = app_ui, server = server)
