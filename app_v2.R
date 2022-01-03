@@ -2,7 +2,7 @@ library(shiny)
 library(dplyr)
 library(plotly)
 library(ggplot2)
-library(DT)
+library(gganimate)
 
 source("functions.R")
 
@@ -46,10 +46,24 @@ ui2 <- fluidPage(
     sidebarPanel(
       selectInput("kategoria",
                   "Wybierz kategorię:",
-                  c("Wykonawcy","Utwory"))),
+                  c("Wykonawcy","Utwory")),
+      ),
       mainPanel(
         tabsetPanel(
-        tabPanel("Wykres",plotly::plotlyOutput("plot2")),
+        tabPanel("Wykres",
+                 plotly::plotlyOutput("plot2"),
+                 sliderInput("n", 
+                             label = "Ilość:", 
+                             value = 5,
+                             min = 1,
+                             max = 10),
+                 actionButton(inputId = "start", label = "Start", icon = icon('play-circle')),
+                 checkboxGroupInput("who2", "Wybierz osoby:",
+                                    choiceNames=c("Patryk", "Łukasz", "Janek"),
+                                    choiceValues=c("p", "l", "j"),
+                                    selected=c("p", "l", "j")
+                 ),
+                 plotly::plotlyOutput("plot3")),
         tabPanel("Tabela",
                  fluidRow(
                    actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
@@ -210,6 +224,28 @@ server <- function(input, output) {
                 panel.grid.minor.y = element_blank(),
                 panel.grid.minor.x = element_blank()) + coord_flip()
         }
+    })
+    
+    output$plot3 <- plotly::renderPlotly({
+      if(input$kategoria == "Wykonawcy"){
+        top <- streaming %>% filter(user %in% input$who2) %>% 
+          group_by(artistName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+          arrange(-Minuty) %>% select(artistName) %>% head(input$n) %>% left_join(streaming) %>% 
+          filter(user %in% input$who2) %>% 
+          group_by(artistName, month) %>% summarise(Minuty = sum(msPlayed)/60000)
+        
+        plot_ly(data = top, x = ~month, y = ~Minuty, color = ~artistName, type = 'scatter',
+                mode = 'lines')
+      }else if(input$kategoria == "Utwory"){
+        top <- streaming %>% filter(user %in% input$who2) %>% 
+          group_by(trackName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+          arrange(-Minuty) %>% select(trackName) %>% head(input$n) %>% left_join(streaming) %>% 
+          filter(user %in% input$who2) %>% 
+          group_by(trackName, month) %>% summarise(Minuty = sum(msPlayed)/60000)
+        
+        plot_ly(data = top, x = ~month, y = ~Minuty, color = ~trackName, type = 'scatter',
+                mode = 'lines')
+      }
     })
     
     
