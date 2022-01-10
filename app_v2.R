@@ -3,8 +3,12 @@ library(dplyr)
 library(plotly)
 library(ggplot2)
 library(gganimate)
+library(spotifyr)
 
 source("functions.R")
+source("connectapi.R")
+
+connect_with_api("TU WPISZ ID", "TU WPISZ SECRET KEY") # oba z pliku password.txt
 
 p_streaming <- read_json("data/patryk/StreamingHistory0.json")
 j_streaming <- bind_rows(read_json("data/janek/StreamingHistory0.json"),
