@@ -52,6 +52,8 @@ p_streaming <- fix_streaming(p_streaming)
 j_streaming <- fix_streaming(j_streaming)
 l_streaming <- fix_streaming(l_streaming)
 
+id <- read.csv("data/artistID")
+
 ui1 <- fluidPage(
     
     titlePanel("W jakich godzinach najwięcej słuchamy muzyki?"),
@@ -70,67 +72,80 @@ ui1 <- fluidPage(
     )
 )
 
+
+
 ui2 <- fluidPage(
   conditionalPanel(condition = "input.kategoria == 'Wykonawcy'",
-                   titlePanel("Wykresy przedstawiające ulubionych wykonawców")
-                   ),
+                   h1("Wykresy przedstawiające ulubionych wykonawców", align = "center")
+  ),
   conditionalPanel(
-                   condition = "input.kategoria == 'Utwory'",
-                   titlePanel("Wykresy przedstawiające ulubione utwory")),
-  sidebarLayout(
-    sidebarPanel(
-      selectInput("kategoria",
-                  "Wybierz kategorię:",
-                  c("Wykonawcy","Utwory")),
-      sliderInput("n", 
-                  label = "Ilość:", 
-                  value = 5,
-                  min = 1,
-                  max = 10),
-      checkboxGroupInput("who2", "Wybierz osoby:",
-                         choiceNames=c("Patryk", "Łukasz", "Janek"),
-                         choiceValues=c("p", "l", "j"),
-                         selected=c("p", "l", "j"))
-      ),
-      mainPanel(
-                 plotly::plotlyOutput("plot2"),
-                 plotly::plotlyOutput("plot3"))
-  )
-  )
+    condition = "input.kategoria == 'Utwory'",
+    h1("Wykresy przedstawiające ulubione utwory", align = "center")),
+  hr(),
+  fluidRow(
+    column(3,offset = 1,selectInput("kategoria",
+                         "Wybierz kategorię:",
+                         c("Wykonawcy","Utwory"))),
+    column(3,offset = 1,sliderInput("n", 
+                       label = "Ilość:", 
+                       value = 5,
+                       min = 1,
+                       max = 10)
+           ),
+    column(3,offset = 1,checkboxGroupInput("who2", "Wybierz osoby:",
+                                         choiceNames=c("Patryk", "Łukasz", "Janek"),
+                                         choiceValues=c("p", "l", "j"),
+                                         selected=c("p", "l", "j"))
+    )
+  ),
+  hr(),
+  fluidRow(
+    column(6,plotly::plotlyOutput("plot2"), style='margin-bottom:30px;border:1px solid; padding: 10px;'),
+    column(6,plotly::plotlyOutput("plot3"), style='margin-bottom:30px;border:1px solid; padding: 10px;')
+  ),
+  fluidRow(
+    column(6,plotly::plotlyOutput("plot6"),style='margin-bottom:30px;border:1px solid; padding: 10px;')
+    )
+)
 
-ui2a <- mainPanel(
+ui2a <- fluidPage(
   conditionalPanel(condition = "input.kategoriaa == 'Wykonawcy'",
-                   titlePanel("Tabela przedstawiająca ulubionych wykonawców")
+                   h1("Tabela przedstawiająca ulubionych wykonawców",align = "center")
   ),
   conditionalPanel(
     condition = "input.kategoriaa == 'Utwory'",
-    titlePanel("Tabela przedstawiająca ulubione utwory")),
+    h1("Tabela przedstawiająca ulubione utwory", align = "Center")),
+    hr(),
           sidebarLayout(
-            sidebarPanel(
+            sidebarPanel(width = 3,
             selectInput("kategoriaa",
                         "Wybierz kategorię:",
                         c("Wykonawcy","Utwory")),
             strong("Wybierz czyją tabelę chcesz zobaczyć:"),
             p(""),
             fixedRow(
-               column(1,offset = 2,actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
+               column(1,offset = 3,actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
                     background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921');  background-size: cover; background-position: center;")
                )
              ),
             fixedRow(
-               column(1,offset = 2,actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
+               column(1,offset = 3,actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
                     background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A');  background-size: cover; background-position: center;")
                )
              ),
             fixedRow(
-               column(1,offset = 2,actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
+               column(1,offset = 3,actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
                     background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD');  background-size: cover; background-position: center;")
                )
                       )
             ),
             mainPanel(
-              uiOutput("text_header"),
-               dataTableOutput("tabela")
+              fixedRow(
+                column(12, offset = 1,uiOutput("text_header"))
+                ),
+               fixedRow(
+                 column(12, offset = 1,dataTableOutput("tabela")))
+              
             )
           )
     )
@@ -233,25 +248,23 @@ server <- function(input, output) {
     output$plot2 <- plotly::renderPlotly({
       if(input$kategoria == "Wykonawcy"){
         
-        p <- p_streaming %>% group_by(artistName) %>% 
-          summarise(msPlayed = sum(msPlayed)) %>%
-          arrange(-msPlayed) %>% head(3)
-          
-        j <- j_streaming %>% group_by(artistName) %>% 
-          summarise(msPlayed = sum(msPlayed)) %>%
-          arrange(-msPlayed) %>% head(3)
+        top <- streaming %>% filter(user %in% input$who2) %>% 
+          group_by(artistName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+          arrange(-Minuty) %>% select(artistName) %>% head(input$n) %>% left_join(streaming) %>% 
+          filter(user %in% input$who2) %>% group_by(artistName,user) %>% summarise(Minuty = sum(msPlayed)/60000) %>% 
+          mutate(Minuty = round(Minuty,0))%>%
+          mutate(Użytkownik = case_when(user == "l" ~ "Łukasz",
+                                        user == "j" ~ "Janek",
+                                        user == "p" ~ "Patryk"))
         
-        l <- l_streaming %>% group_by(artistName) %>% 
-          summarise(msPlayed = sum(msPlayed)) %>%
-          arrange(-msPlayed) %>% head(3)
+        colnames(top) <- c("Wykonawca","user","Minuty","Użytkownik")
         
-        streaming <- bind_rows("p"=p, "j"=j, "l"=l,
-                               .id="user")
-        ggplot(streaming, aes(x=artistName,y=(msPlayed/60000), fill = user)) +
+        
+        ggplot(top, aes(x=Wykonawca,y=Minuty, fill = Użytkownik)) +
           geom_col(position =  "dodge") + theme_bw() +
           labs(
             x="Wykonawca",
-            y="Przesłuchane minuty"
+            y="Minuty"
           ) +
           theme(panel.grid.major.y = element_line(linetype=5),
                 panel.grid.minor.y = element_blank(),
@@ -259,25 +272,22 @@ server <- function(input, output) {
         
         
       }else if(input$kategoria == "Utwory"){
-        p <- p_streaming %>% group_by(trackName) %>% 
-          summarise(msPlayed = sum(msPlayed)) %>%
-          arrange(-msPlayed) %>% head(3)
+        top <- streaming %>% filter(user %in% input$who2) %>% 
+          group_by(trackName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+          arrange(-Minuty) %>% select(trackName) %>% head(input$n) %>% left_join(streaming) %>% 
+          filter(user %in% input$who2) %>% group_by(trackName,user) %>% summarise(Minuty = sum(msPlayed)/60000)%>%
+          mutate(Minuty = round(Minuty,0))%>%
+          mutate(Użytkownik = case_when(user == "l" ~ "Łukasz",
+                                        user == "j" ~ "Janek",
+                                        user == "p" ~ "Patryk"))
         
-        j <- j_streaming %>% group_by(trackName) %>% 
-          summarise(msPlayed = sum(msPlayed)) %>%
-          arrange(-msPlayed) %>% head(3)
+        colnames(top) <- c("Utwór","user","Minuty","Użytkownik")
         
-        l <- l_streaming %>% group_by(trackName) %>% 
-          summarise(msPlayed = sum(msPlayed)) %>%
-          arrange(-msPlayed) %>% head(3)
-        
-        streaming <- bind_rows("p"=p, "j"=j, "l"=l,
-                               .id="user")
-        ggplot(streaming, aes(x=trackName,y=(msPlayed/60000), fill = user)) +
+        ggplot(top, aes(x=Utwór,y=Minuty, fill = Użytkownik)) +
           geom_col(position =  "dodge") + theme_bw() +
           labs(
             x="Utwor",
-            y="Przesłuchane minuty"
+            y="Minuty"
           ) +
           theme(panel.grid.major.y = element_line(linetype=5),
                 panel.grid.minor.y = element_blank(),
@@ -291,19 +301,39 @@ server <- function(input, output) {
           group_by(artistName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
           arrange(-Minuty) %>% select(artistName) %>% head(input$n) %>% left_join(streaming) %>% 
           filter(user %in% input$who2) %>% 
-          group_by(artistName, month) %>% summarise(Minuty = sum(msPlayed)/60000)
+          group_by(artistName, month) %>% summarise(Minuty = round(sum(msPlayed)/60000),0)
+          colnames(top) <- c("Wykonawca","Miesiąc","Minuty")
         
-        plot_ly(data = top, x = ~month, y = ~Minuty, color = ~artistName, type = 'scatter',
-                mode = 'lines')
+        
+          ggplot(top, aes(x=Miesiąc,y=Minuty, color = Wykonawca)) +
+            geom_line() + theme_bw() +
+            labs(
+              x="Miesiąc",
+              y="Minuty"
+            ) +
+            theme(panel.grid.major.y = element_line(linetype=5),
+                  panel.grid.minor.y = element_blank(),
+                  panel.grid.minor.x = element_blank())+
+            scale_x_continuous(breaks = seq(0,12,by=1))
       }else if(input$kategoria == "Utwory"){
         top <- streaming %>% filter(user %in% input$who2) %>% 
           group_by(trackName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
           arrange(-Minuty) %>% select(trackName) %>% head(input$n) %>% left_join(streaming) %>% 
           filter(user %in% input$who2) %>% 
-          group_by(trackName, month) %>% summarise(Minuty = sum(msPlayed)/60000)
+          group_by(trackName, month) %>% summarise(Minuty = round(sum(msPlayed)/60000),0)
+        colnames(top) <- c("Utwór","Miesiąc","Minuty")
         
-        plot_ly(data = top, x = ~month, y = ~Minuty, color = ~trackName, type = 'scatter',
-                mode = 'lines')
+        
+        ggplot(top, aes(x=Miesiąc,y=Minuty, color = Utwór)) +
+          geom_line() + theme_bw() +
+          labs(
+            x="Miesiąc",
+            y="Minuty"
+          ) +
+          theme(panel.grid.major.y = element_line(linetype=5),
+                panel.grid.minor.y = element_blank(),
+                panel.grid.minor.x = element_blank())+
+          scale_x_continuous(breaks = seq(0,12,by=1))
       }
     })
     
