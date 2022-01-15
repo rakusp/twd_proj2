@@ -4,6 +4,7 @@ library(plotly)
 library(ggplot2)
 library(gganimate)
 library(spotifyr)
+library(DT)
 
 source("functions.R")
 source("connectapi.R")
@@ -70,48 +71,70 @@ ui1 <- fluidPage(
 )
 
 ui2 <- fluidPage(
-  
-  #Jak sie uda to gatunki i albumy
-  titlePanel("Ulubieni wykonawcy/utwory?"),
+  conditionalPanel(condition = "input.kategoria == 'Wykonawcy'",
+                   titlePanel("Wykresy przedstawiające ulubionych wykonawców")
+                   ),
+  conditionalPanel(
+                   condition = "input.kategoria == 'Utwory'",
+                   titlePanel("Wykresy przedstawiające ulubione utwory")),
   sidebarLayout(
     sidebarPanel(
       selectInput("kategoria",
                   "Wybierz kategorię:",
                   c("Wykonawcy","Utwory")),
+      sliderInput("n", 
+                  label = "Ilość:", 
+                  value = 5,
+                  min = 1,
+                  max = 10),
+      checkboxGroupInput("who2", "Wybierz osoby:",
+                         choiceNames=c("Patryk", "Łukasz", "Janek"),
+                         choiceValues=c("p", "l", "j"),
+                         selected=c("p", "l", "j"))
       ),
       mainPanel(
-        tabsetPanel(
-        tabPanel("Wykres",
                  plotly::plotlyOutput("plot2"),
-                 sliderInput("n", 
-                             label = "Ilość:", 
-                             value = 5,
-                             min = 1,
-                             max = 10),
-                 actionButton(inputId = "start", label = "Start", icon = icon('play-circle')),
-                 checkboxGroupInput("who2", "Wybierz osoby:",
-                                    choiceNames=c("Patryk", "Łukasz", "Janek"),
-                                    choiceValues=c("p", "l", "j"),
-                                    selected=c("p", "l", "j")
-                 ),
-                 plotly::plotlyOutput("plot3")),
-        tabPanel("Tabela",
-                 fluidRow(
-                   actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
-                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921');  background-size: cover; background-position: center;"),
-                   actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
-                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A');  background-size: cover; background-position: center;"),
-                   actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
-                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD');  background-size: cover; background-position: center;"),
-                   textOutput("kto"),
-                   dataTableOutput("tabela")
-                 )
-                 )
-                
-        )
-      )
+                 plotly::plotlyOutput("plot3"))
   )
   )
+
+ui2a <- mainPanel(
+  conditionalPanel(condition = "input.kategoriaa == 'Wykonawcy'",
+                   titlePanel("Tabela przedstawiająca ulubionych wykonawców")
+  ),
+  conditionalPanel(
+    condition = "input.kategoriaa == 'Utwory'",
+    titlePanel("Tabela przedstawiająca ulubione utwory")),
+          sidebarLayout(
+            sidebarPanel(
+            selectInput("kategoriaa",
+                        "Wybierz kategorię:",
+                        c("Wykonawcy","Utwory")),
+            strong("Wybierz czyją tabelę chcesz zobaczyć:"),
+            p(""),
+            fixedRow(
+               column(1,offset = 2,actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
+                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921');  background-size: cover; background-position: center;")
+               )
+             ),
+            fixedRow(
+               column(1,offset = 2,actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
+                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A');  background-size: cover; background-position: center;")
+               )
+             ),
+            fixedRow(
+               column(1,offset = 2,actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
+                    background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD');  background-size: cover; background-position: center;")
+               )
+                      )
+            ),
+            mainPanel(
+              uiOutput("text_header"),
+               dataTableOutput("tabela")
+            )
+          )
+    )
+
 
 ui3 <- fluidPage(
   titlePanel("Zgodność muzycznych preferencji"),
@@ -124,19 +147,22 @@ ui3 <- fluidPage(
 
 server <- function(input, output) {
   
-  observeEvent(input$kategoria, {output$tabela <- renderDataTable({})
-  output$kto <- renderText({""})})
+  rv <-reactiveVal("")
+  observeEvent(input$button_l,{rv("Łukasz")})
+  observeEvent(input$button_p,{rv("Patryk")})
+  observeEvent(input$button_j,{rv("Janek")})
+  output$text_header <- renderUI(h2(rv(),align = "center"))
   
-  
+  observeEvent(input$kategoriaa, {output$tabela <- renderDataTable({})
+  rv("")})
   observeEvent(input$button_l,{
-    output$kto <- renderText({"Łukasz"})
-    if(input$kategoria == "Wykonawcy"){
+    if(input$kategoriaa == "Wykonawcy"){
       output$tabela <- renderDataTable({
         l_streaming %>% group_by(artistName) %>% 
           summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
           arrange(-`Przesłuchane minuty`)
     })
-    }else if(input$kategoria == "Utwory"){
+    }else if(input$kategoriaa == "Utwory"){
       output$tabela <- renderDataTable({
         l_streaming %>% group_by(trackName) %>% 
           summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
@@ -147,14 +173,13 @@ server <- function(input, output) {
   
   
   observeEvent(input$button_p,{
-    output$kto <- renderText({"Patryk"})
-    if(input$kategoria == "Wykonawcy"){
+    if(input$kategoriaa == "Wykonawcy"){
       output$tabela <- renderDataTable({
         p_streaming %>% group_by(artistName) %>% 
           summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
           arrange(-`Przesłuchane minuty`)
       })
-    }else if(input$kategoria == "Utwory"){
+    }else if(input$kategoriaa == "Utwory"){
       output$tabela <- renderDataTable({
         p_streaming %>% group_by(trackName) %>% 
           summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
@@ -164,14 +189,13 @@ server <- function(input, output) {
   })
   
   observeEvent(input$button_j,{
-    output$kto <- renderText({"Janek"})
-    if(input$kategoria == "Wykonawcy"){
+    if(input$kategoriaa == "Wykonawcy"){
       output$tabela <- renderDataTable({
         j_streaming %>% group_by(artistName) %>% 
           summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
           arrange(-`Przesłuchane minuty`)
       })
-    }else if(input$kategoria == "Utwory"){
+    }else if(input$kategoriaa == "Utwory"){
       output$tabela <- renderDataTable({
         j_streaming %>% group_by(trackName) %>% 
           summarise(`Przesłuchane minuty` = round(sum(msPlayed)/60000)) %>%
@@ -368,7 +392,10 @@ server <- function(input, output) {
 app_ui <- navbarPage(
     title="Spotify",
     tabPanel("Godziny słuchania", ui1, icon = icon("clock")),
-    tabPanel("Najczęściej słuchane", ui2, icon = icon("heart")),
+    navbarMenu("Najczęściej słuchane", 
+               tabPanel("Wykresy", ui2, icon = icon("chart-line")),
+               tabPanel("Tabela", ui2a, icon = icon("table")),
+               icon = icon("heart")),
     tabPanel("Zgodność muzyki", ui3, icon = icon("handshake"))
 )
 
