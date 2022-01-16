@@ -100,8 +100,10 @@ ui2 <- fluidPage(
   ),
   hr(),
   fluidRow(
-    column(6,plotly::plotlyOutput("plot2"), style='margin-bottom:30px;border:1px solid; padding: 10px;'),
-    column(6,plotly::plotlyOutput("plot3"), style='margin-bottom:30px;border:1px solid; padding: 10px;')
+    column(6,h3("Ile minut słuchaliśmy naszych ulubionych wykonawców?",align="center"),
+           plotly::plotlyOutput("plot2"), style='margin-bottom:30px;border:1px solid; padding: 10px;'),
+    column(6,h3("Jak zminiał się czas słuchania na przestrzeni całego roku?",align="center"),
+           plotly::plotlyOutput("plot3"), style='margin-bottom:30px;border:1px solid; padding: 10px;')
   ),
   fluidRow(
     column(6,plotly::plotlyOutput("plot6"),style='margin-bottom:30px;border:1px solid; padding: 10px;')
