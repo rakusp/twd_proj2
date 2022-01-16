@@ -176,8 +176,8 @@ ui3 <- fluidPage(
   fluidRow(
     plotOutput("genres") %>% withSpinner(type=2, color.background="White"),
     align="center"
-  ),
-  style = "overflow-y: auto;" 
+  )
+  # style = "overflow-y: auto;" 
 )
   
 
