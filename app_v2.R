@@ -5,6 +5,8 @@ library(ggplot2)
 library(gganimate)
 library(spotifyr)
 library(DT)
+library(VennDiagram)
+library(shinycssloaders)
 
 source("functions.R")
 source("connectapi.R")
@@ -12,8 +14,8 @@ source("connectapi.R")
 library(httr)
 
 # przekopiować z password.txt
-clientID = 'TAJNE'
-secret = 'TAJNE'
+clientID = '28e3d7ae0359454888cc25815aa18732'
+secret = 'c0f866dbe2db4388b51d5f1f714ca8be'
 
 response = POST(
   'https://accounts.spotify.com/api/token',
@@ -52,7 +54,8 @@ p_streaming <- fix_streaming(p_streaming)
 j_streaming <- fix_streaming(j_streaming)
 l_streaming <- fix_streaming(l_streaming)
 
-id <- read.csv("data/artistID")
+artists <- read.csv("data/artistID")
+tracks <- read.csv("data/trackID")
 
 ui1 <- fluidPage(
     
@@ -154,11 +157,29 @@ ui2a <- fluidPage(
 
 
 ui3 <- fluidPage(
-  titlePanel("Zgodność muzycznych preferencji"),
-      tabsetPanel(
-        tabPanel("Utwory", plotOutput("plot4")),
-        tabPanel("Artyści", plotOutput("plot5"))
-      )
+  fluidRow(
+    titlePanel("Zgodność muzycznych preferencji"),
+    align="center"
+  ),
+  fluidRow(
+    column(
+      plotOutput("plot4") %>% withSpinner(type=2, color.background="White"),
+      width=6
+    ),
+    column(
+      plotOutput("plot5") %>% withSpinner(type=2, color.background="White"),
+      width=6
+    )
+  ),
+  fluidRow(
+    titlePanel("Ulubione gatunki muzyczne"),
+    align="center"
+  ),
+  fluidRow(
+    plotOutput("genres") %>% withSpinner(type=2, color.background="White"),
+    align="center"
+  )
+  # style = "overflow-y: auto;" 
 )
   
 
@@ -416,6 +437,54 @@ server <- function(input, output) {
               panel.grid.minor.x = element_blank())
     })
     
+    output$genres <- renderPlot({
+      temp <- function(streaming){
+        streaming %>%
+          group_by(artistName) %>%
+          summarise(totalTime = sum(msPlayed)) %>%
+          arrange(-totalTime) %>%
+          head(25) %>%
+          select(artistName)
+      }
+      
+      p_art <- temp(p_streaming)
+      j_art <- temp(j_streaming)
+      l_art <- temp(l_streaming)
+      
+      p_gen <- c()
+      j_gen <- c()
+      l_gen <- c()
+      
+      for(i in 1:25) {
+        p_gen <- c(p_gen, unlist(getArtistInfo(p_art[[i, 1]])[["genres"]]))
+        j_gen <- c(j_gen, unlist(getArtistInfo(j_art[[i, 1]])[["genres"]]))
+        l_gen <- c(l_gen, unlist(getArtistInfo(l_art[[i, 1]])[["genres"]]))
+      }
+      
+      data = list(Patryk=unique(p_gen), Łukasz=unique(l_gen),
+                  Janek=unique(j_gen))
+      
+      
+      grid.newpage()
+      v <- venn.diagram(data, filename = NULL,col=c("#440154ff", '#21908dff', '#fde725ff'),
+                        fill = c(alpha("#440154ff",0.3), alpha('#21908dff',0.3), alpha('#fde725ff',0.3)),
+                        fontfamily = "sans",
+                        cex=1,
+                        cat.cex = 3,
+                        cat.default.pos = "outer",
+                        cat.fontfamily = "sans",
+                        cat.col = c("#440154ff", '#21908dff', '#fde725ff'),
+                        cat.pos=c(315, 45, 0),
+                        rotation.degree=360)
+      v[[7]]$label <- stringr::str_to_title(paste(setdiff(setdiff(l_gen, p_gen), j_gen), collapse="\n"))
+      v[[8]]$label <- stringr::str_to_title(paste(setdiff(setdiff(j_gen, p_gen), l_gen), collapse="\n"))
+      v[[9]]$label <- stringr::str_to_title(paste(setdiff(intersect(p_gen, l_gen), j_gen), collapse="\n"))
+      v[[10]]$label <- stringr::str_to_title(paste(intersect(intersect(p_gen, l_gen), j_gen), collapse="\n"))
+      v[[11]]$label <- stringr::str_to_title(paste(setdiff(intersect(p_gen, j_gen), l_gen), collapse="\n"))
+      v[[12]]$label <-stringr::str_to_title(paste(setdiff(setdiff(p_gen, l_gen), j_gen), collapse="\n"))
+      grid.draw(v)
+      
+    }, height=900, width=900)
     
     
     

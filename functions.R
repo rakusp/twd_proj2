@@ -25,3 +25,10 @@ fix_streaming <- function(streaming_history_df) {
     
 }
 
+getArtistInfo <- function(artist_name) {
+  artistID <- artists %>% filter(artistName==artist_name)
+  URI = paste0('https://api.spotify.com/v1/artists/', artistID[[2]])
+  response2 = GET(url = URI, add_headers(Authorization = HeaderValue))
+  content(response2)
+}
+
