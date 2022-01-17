@@ -240,7 +240,7 @@ ui3 <- fluidPage(
         align="center"
       ),
       fluidRow(
-        plotOutput("genres") %>% withSpinner(type=2, color.background="White"),
+        plotOutput("genres", height=900, width=900) %>% withSpinner(type=2, color.background="White"),
         align="center"
         )
     ),
