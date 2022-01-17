@@ -56,6 +56,8 @@ l_streaming <- fix_streaming(l_streaming)
 
 artists <- read.csv("data/artistID")
 tracks <- read.csv("data/trackID")
+popArtist<- read.csv("data/artistPop")
+popTrack <- read.csv("data/trackPopDuration")
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
@@ -106,11 +108,45 @@ ui2 <- fluidPage(
   ),
   hr(),
   fluidRow(
-    column(6,plotly::plotlyOutput("plot2"), style='margin-bottom:30px;border:1px solid; padding: 10px;'),
-    column(6,plotly::plotlyOutput("plot3"), style='margin-bottom:30px;border:1px solid; padding: 10px;')
+    
+    column(6,
+           conditionalPanel(condition = "input.kategoria == 'Wykonawcy'",
+                            h3("Ile czasu poświęciliśmy na słuchanie ulubionych wykonawców?", align = "center")
+           ),
+           conditionalPanel(
+             condition = "input.kategoria == 'Utwory'",
+             h3("Ile czasu poświęciliśmy na słuchanie ulubionych utworów?", align = "center")),
+           plotly::plotlyOutput("plot2")%>% withSpinner(type=2, color.background="White"),
+           style='margin-bottom:30px;border:1px solid; padding: 10px;'),
+    column(6,
+           conditionalPanel(condition = "input.kategoria == 'Wykonawcy'",
+                            h3("Ile minut słuchaliśmy ulubionych wykonawców w danym miesiącu?", align = "center")
+           ),
+           conditionalPanel(
+             condition = "input.kategoria == 'Utwory'",
+             h3("Ile minut słuchaliśmy ulubionych utworów w danym miesiącu?", align = "center")),
+           plotly::plotlyOutput("plot3")%>% withSpinner(type=2, color.background="White"),
+           style='margin-bottom:30px;border:1px solid; padding: 10px;')
   ),
   fluidRow(
-    column(6,plotly::plotlyOutput("plot6"),style='margin-bottom:30px;border:1px solid; padding: 10px;')
+    column(6, 
+           conditionalPanel(
+             condition = "input.kategoria == 'Wykonawcy'",
+             h3("Wykonawców o jakiej popularności słuchaliśmy najczęściej?", align = "center")
+    ),
+    conditionalPanel(
+      condition = "input.kategoria == 'Utwory'",
+      h3("Utwory o jakiej popularności słuchaliśmy najczęściej?", align = "center")),
+    plotly::plotlyOutput("plot6")%>% withSpinner(type=2, color.background="White"),
+           style='margin-bottom:30px;border:1px solid; padding: 10px;'),
+    column(6,conditionalPanel(
+      condition = "input.kategoria == 'Wykonawcy'",
+      h3("Ile średnio trwało jedno odtworzenie ulubionych wykonawców?", align = "center")),
+      conditionalPanel(
+        condition = "input.kategoria == 'Utwory'",
+        h3("Jaki procent utworu średnio stanowiło jedno odtworzenie?", align = "center")),
+           plotly::plotlyOutput("plot7")%>% withSpinner(type=2, color.background="White"),
+           style='margin-bottom:30px;border:1px solid; padding: 10px;')
   )
 )
 
@@ -150,7 +186,8 @@ ui2a <- fluidPage(
         column(12, offset = 1,uiOutput("text_header"))
       ),
       fixedRow(
-        column(12, offset = 1,dataTableOutput("tabela")))
+        column(12, offset = 1,
+               dataTableOutput("tabela")%>% withSpinner(type=2, color.background="White")))
       
     )
   )
@@ -317,20 +354,11 @@ server <- function(input, output) {
               panel.grid.minor.y = element_blank(),
               panel.grid.minor.x = element_blank()) + coord_flip()
     }
-  })
+  }) %>% bindCache(input$kategoria, input$n, input$who2)
   
   output$plot3 <- plotly::renderPlotly({
-    if(input$kategoria == "Wykonawcy"){
-      top <- streaming %>% filter(user %in% input$who2) %>% 
-        group_by(artistName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
-        arrange(-Minuty) %>% select(artistName) %>% head(input$n) %>% left_join(streaming) %>% 
-        filter(user %in% input$who2) %>% 
-        group_by(artistName, month) %>% summarise(Minuty = round(sum(msPlayed)/60000),0)
-      colnames(top) <- c("Wykonawca","Miesiąc","Minuty")
-      
-      
-      ggplot(top, aes(x=Miesiąc,y=Minuty, color = Wykonawca)) +
-        geom_line() + theme_bw() +
+    if(length(input$who2)==0){
+      ggplot() + theme_bw() +
         labs(
           x="Miesiąc",
           y="Minuty"
@@ -339,27 +367,48 @@ server <- function(input, output) {
               panel.grid.minor.y = element_blank(),
               panel.grid.minor.x = element_blank())+
         scale_x_continuous(breaks = seq(0,12,by=1))
-    }else if(input$kategoria == "Utwory"){
-      top <- streaming %>% filter(user %in% input$who2) %>% 
-        group_by(trackName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
-        arrange(-Minuty) %>% select(trackName) %>% head(input$n) %>% left_join(streaming) %>% 
-        filter(user %in% input$who2) %>% 
-        group_by(trackName, month) %>% summarise(Minuty = round(sum(msPlayed)/60000),0)
-      colnames(top) <- c("Utwór","Miesiąc","Minuty")
-      
-      
-      ggplot(top, aes(x=Miesiąc,y=Minuty, color = Utwór)) +
-        geom_line() + theme_bw() +
-        labs(
-          x="Miesiąc",
-          y="Minuty"
-        ) +
-        theme(panel.grid.major.y = element_line(linetype=5),
-              panel.grid.minor.y = element_blank(),
-              panel.grid.minor.x = element_blank())+
-        scale_x_continuous(breaks = seq(0,12,by=1))
+    }else{
+      if(input$kategoria == "Wykonawcy"){
+        top <- streaming %>% filter(user %in% input$who2) %>% 
+          group_by(artistName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+          arrange(-Minuty) %>% select(artistName) %>% head(input$n) %>% left_join(streaming) %>% 
+          filter(user %in% input$who2) %>% 
+          group_by(artistName, month) %>% summarise(Minuty = round(sum(msPlayed)/60000),0)
+        colnames(top) <- c("Wykonawca","Miesiąc","Minuty")
+        
+        
+        ggplot(top, aes(x=Miesiąc,y=Minuty, color = Wykonawca)) +
+          geom_line() + theme_bw() +
+          labs(
+            x="Miesiąc",
+            y="Minuty"
+          ) +
+          theme(panel.grid.major.y = element_line(linetype=5),
+                panel.grid.minor.y = element_blank(),
+                panel.grid.minor.x = element_blank())+
+          scale_x_continuous(breaks = seq(0,12,by=1))
+      }else if(input$kategoria == "Utwory"){
+        top <- streaming %>% filter(user %in% input$who2) %>% 
+          group_by(trackName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+          arrange(-Minuty) %>% select(trackName) %>% head(input$n) %>% left_join(streaming) %>% 
+          filter(user %in% input$who2) %>% 
+          group_by(trackName, month) %>% summarise(Minuty = round(sum(msPlayed)/60000),0)
+        colnames(top) <- c("Utwór","Miesiąc","Minuty")
+        
+        
+        ggplot(top, aes(x=Miesiąc,y=Minuty, color = Utwór)) +
+          geom_line() + theme_bw() +
+          labs(
+            x="Miesiąc",
+            y="Minuty"
+          ) +
+          theme(panel.grid.major.y = element_line(linetype=5),
+                panel.grid.minor.y = element_blank(),
+                panel.grid.minor.x = element_blank())+
+          scale_x_continuous(breaks = seq(0,12,by=1))
+      }
     }
-  })
+  })%>% bindCache(input$kategoria, input$n, input$who2)
   
   
   output$plot4 <- renderPlot({
@@ -438,6 +487,70 @@ server <- function(input, output) {
             panel.grid.minor.x = element_blank())
   })
   
+  output$plot6 <- plotly::renderPlotly({
+    if(input$kategoria == "Wykonawcy"){
+      top <- merge(streaming,popArtist,by = "artistName") %>% 
+        filter(user %in% input$who2) %>% select(Popularność)
+    }else if(input$kategoria == "Utwory"){
+      top <- merge(streaming,popTrack, by =c("trackName","artistName")) %>% 
+        filter(user %in% input$who2) %>% select(Popularność)
+    }
+    
+    ggplot(top, aes(x=Popularność)) + geom_histogram(binwidth = 1) +
+      theme_bw() +
+      labs(
+        x="Popularność",
+        y="Ilość"
+      ) + 
+      theme(panel.grid.major.y = element_line(linetype=5),
+            panel.grid.minor.y = element_blank(),
+            panel.grid.minor.x = element_blank())
+    
+  }) %>% bindCache(input$kategoria,input$who2)
+  
+  output$plot7 <- plotly::renderPlotly({
+    if(input$kategoria == "Wykonawcy"){
+      top <- streaming %>% filter(user %in% input$who2) %>% 
+        group_by(artistName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+        arrange(-Minuty) %>% select(artistName) %>% head(input$n) %>% left_join(streaming) %>% 
+        filter(user %in% input$who2) %>% select(artistName,msPlayed) %>% group_by(artistName) %>% 
+        mutate(Średnio = mean(msPlayed)/60000)
+      colnames(top) <- c("Wykonawca","msPlayed","Średnio")
+      
+      
+      ggplot(top, aes(x=Wykonawca,y=Średnio)) +
+        geom_point() + theme_bw() +
+        labs(
+          x="Wykonawca",
+          y="Średnia długość jednego odtworzenia"
+        ) +
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank()) + coord_flip()
+    }
+    else if(input$kategoria == "Utwory"){
+      top <- streaming %>% filter(user %in% input$who2) %>% 
+        group_by(trackName) %>%  summarise(Minuty = sum(msPlayed)/60000) %>% 
+        arrange(-Minuty) %>% select(trackName) %>% head(input$n) %>% left_join(streaming) %>% 
+        filter(user %in% input$who2)
+      top <- merge(top,popTrack, by = c("trackName","artistName")) %>% 
+        select(trackName, msPlayed,CzasTrwania) %>% mutate(Procent = (msPlayed/CzasTrwania)*100) %>% 
+        group_by(trackName) %>% mutate(Srednio = round(mean(Procent),2))
+      colnames(top) <- c("Utwór", "","","","Średni procent")
+      
+      ggplot(top,aes(x=Utwór,y=`Średni procent`)) +
+        geom_point() + theme_bw() +
+        labs(
+          x="Utwór",
+          y="Średni procent przesuchanego utworu w trakcie jednego odtworzenia"
+        ) +
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank()) + coord_flip()
+    }
+  })
+  
+  
   output$genres <- renderPlot({
     temp <- function(streaming){
       streaming %>%
@@ -498,7 +611,28 @@ app_ui <- navbarPage(
              tabPanel("Wykresy", ui2, icon = icon("chart-line")),
              tabPanel("Tabela", ui2a, icon = icon("table")),
              icon = icon("heart")),
-  tabPanel("Zgodność muzyki", ui3, icon = icon("handshake"))
+  tabPanel("Zgodność muzyki", ui3, icon = icon("handshake")),
+  footer = shiny::HTML('<footer class="text-center text-sm-start" style="width:100%;">
+  <hr>
+              <span style="font-weight: bold">Autorzy:<span/>
+              <br/>
+              <span style="font-weight: bold">Patryk Rakus<span/>
+              <a href="https://github.com/rakusp">
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width = "1.5%" height = "1.5%">
+              </a>
+              <br/>
+              <span style="font-weight: bold">Jan Skwarek<span/>
+              <a href="https://github.com/janskwr">
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width = "1.5%" height = "1.5%">
+              </a>
+              <br/>
+              <span style="font-weight: bold">Łukasz Tomaszewski<span/>
+              <a href="https://github.com/tomaszewskil">
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width = "1.5%" height = "1.5%">
+              </a>
+              </div>
+              
+              </footer>')
 )
 
 shinyApp(ui = app_ui, server = server)
