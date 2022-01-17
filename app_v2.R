@@ -7,6 +7,7 @@ library(spotifyr)
 library(DT)
 library(VennDiagram)
 library(shinycssloaders)
+library(fmsb)
 
 source("functions.R")
 source("connectapi.R")
@@ -58,6 +59,31 @@ artists <- read.csv("data/artistID")
 tracks <- read.csv("data/trackID")
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+
+# dodatkowe dane o utworach
+# streaming %>% 
+#   select(trackName) %>% 
+#   unique() %>% 
+#   inner_join(tracks) -> streamingID
+# 
+# df <- data.frame()
+# for(i in seq(101,dim(streamingID)[1], 100)) {
+#   df <- rbind(df, get_track_audio_features(streamingID[(i-100):(i-1), "id"]))
+#   print(i)
+# }
+# df <- rbind(df ,get_track_audio_features(streamingID[4101:4119, "id"]))
+# 
+# trackInfo <- inner_join(streamingID, df, "id") %>% unique()
+# write.csv(trackInfo, file="data/trackInfo")
+
+trackInfo <- read.csv("data/trackInfo")
+
+getArtistInfo <- function(artist_name) {
+  artistID <- artists %>% filter(artistName==artist_name)
+  URI = paste0('https://api.spotify.com/v1/artists/', artistID[[2]])
+  response2 = GET(url = URI, add_headers(Authorization = HeaderValue))
+  content(response2)
+}
 
 
 ui1 <- fluidPage(
@@ -158,27 +184,54 @@ ui2a <- fluidPage(
 
 
 ui3 <- fluidPage(
-  fluidRow(
-    titlePanel("Zgodność muzycznych preferencji"),
-    align="center"
-  ),
-  fluidRow(
-    column(
-      plotOutput("plot4") %>% withSpinner(type=2, color.background="White"),
-      width=6
+  tabsetPanel(
+    tabPanel("Utwory, artyści i gatunki",
+       fluidRow(
+         titlePanel("Zgodność utworów i artystów"),
+         align="center"
+      ),
+      column(
+        plotOutput("plot4") %>% withSpinner(type=2, color.background="White"),
+        width=6
+      ),
+      column(
+        plotOutput("plot5") %>% withSpinner(type=2, color.background="White"),
+        width=6
+      ),
+      fluidRow(
+        titlePanel("Ulubione gatunki muzyczne"),
+        align="center"
+      ),
+      fluidRow(
+        plotOutput("genres") %>% withSpinner(type=2, color.background="White"),
+        align="center"
+        )
     ),
-    column(
-      plotOutput("plot5") %>% withSpinner(type=2, color.background="White"),
-      width=6
+    tabPanel("Cechy ulubionych utworów",
+      titlePanel("Średnie cechy ulubionych utworów"),
+      sidebarLayout(
+        sidebarPanel(
+          width=3,
+          sliderInput("top",
+                      label="Liczba ulubionych utworów",
+                      value=10,
+                      min=2,
+                      max=50),
+          h4("Taneczność - jak bardzo utwór nadaje się do tańczenia, im większa
+             wartość, tym bardziej się nadaje"),
+          h4("Energia - miara intensywności i aktywności utworu, utwory o
+             wysokiej wartości są zwykle szybkie i głośne"),
+          h4("Akustyczność - miara jak akustyczny jest utwór"),
+          h4("Wartościowość - miara jak muzycznie pozytywny jest utwór, utwory
+             o wysokiej wartości są zwykle wesołe, natomiast o niskiej smutne"),
+          h4("Mowa - im w utworze bardziej dominują słowa, tym większa jest
+             wartość")
+        ),
+        mainPanel(
+          plotOutput("spider")
+        )
+      )
     )
-  ),
-  fluidRow(
-    titlePanel("Ulubione gatunki muzyczne"),
-    align="center"
-  ),
-  fluidRow(
-    plotOutput("genres") %>% withSpinner(type=2, color.background="White"),
-    align="center"
   )
   # style = "overflow-y: auto;" 
 )
@@ -487,6 +540,55 @@ server <- function(input, output) {
     
   }, height=900, width=900)
   
+  output$spider <- renderPlot({
+    temp <- function(streaming, howMany) {
+      streaming %>% 
+        group_by(artistName, trackName) %>% 
+        summarise(totalTime = sum(msPlayed), .groups="drop") %>% 
+        arrange(-totalTime) %>% 
+        head(howMany) %>% 
+        select(artistName, trackName, totalTime) %>% 
+        # unique() %>% 
+        inner_join(trackInfo, by=c("artistName", "trackName")) %>% 
+        select(danceability, energy, acousticness, valence, speechiness) %>%
+        mutate_all(mean) %>%
+        head(1) -> x
+
+      rbind(rep(1,5), rep(0,5), x)
+    }
+    
+    p_af <- temp(p_streaming, input$top)
+    j_af <- temp(j_streaming, input$top)
+    l_af <- temp(l_streaming, input$top)
+    
+    par(mar=c(0, 0.8, 4, 0))
+    par(mfrow=c(1,3))
+    radarchart(p_af, axistype=4, plwd=4, plty=1, cglcol="darkgray", cglty=1,
+               cglwd=1, vlcex=1.6, calcex=0.8, cex.main=3,
+               vlabels=c("Taneczność", "Energia", "Akustyczność",
+                          "Wartościowość", "Mowa"),
+               axislabcol="darkgray",
+               pcol=rgb(0.3, 0.8, 0.8, 1),
+               pfcol=rgb(0.3, 0.8, 0.8, 0.3),
+               title="Patryk")
+    radarchart(j_af, axistype=4, plwd=4, plty=1, cglcol="darkgray", cglty=1,
+               cglwd=1, vlcex=1.6, calcex=0.8, cex.main=3,
+               vlabels=c("Taneczność", "Energia", "Akustyczność",
+                         "Wartościowość", "Mowa"),
+               axislabcol="darkgray",
+               pcol=rgb(0, 0.75, 0.2, 1),
+               pfcol=rgb(0, 0.75, 0.2, 0.3),
+               title="Janek")
+    radarchart(l_af, axistype=4, plwd=4, plty=1, cglcol="darkgray", cglty=1,
+               cglwd=1, vlcex=1.6, calcex=0.8, cex.main=3,
+               vlabels=c("Taneczność", "Energia", "Akustyczność",
+                         "Wartościowość", "Mowa"),
+               axislabcol="darkgray",
+               pcol=rgb(0.8, 0.8, 0, 1),
+               pfcol=rgb(0.8, 0.8, 0, 0.3),
+               title="Łukasz")
+    
+  })
   
   
 }
