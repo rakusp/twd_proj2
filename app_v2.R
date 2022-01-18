@@ -214,19 +214,19 @@ ui2a <- fluidPage(
                  strong("Wybierz czyją tabelę chcesz zobaczyć:"),
                  p(""),
                  fixedRow(
-                   column(1,offset = 3,actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
+                   column(12,actionButton(inputId = "button_p", label = NULL, style = "width: 150px; height: 150px;
                     background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-1/p200x200/117042018_2583202521944871_6439550514274272204_n.jpg?_nc_cat=109&ccb=1-5&_nc_sid=7206a8&_nc_ohc=QFaAaBs81foAX9puy1r&_nc_ht=scontent-ham3-1.xx&oh=00_AT9_MBy9ndkBmvrSfEiU61e6ODO0xvL68sqQsXmxxyb_dQ&oe=61F79921');  background-size: cover; background-position: center;")
-                   )
+                   ,align = "center")
                  ),
                  fixedRow(
-                   column(1,offset = 3,actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
+                   column(12,actionButton(inputId = "button_l", label = NULL, style = "width: 150px; height: 150px;
                     background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/35237401_2001879876551410_721839996499132416_n.jpg?_nc_cat=104&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=Z8XbrlmH_TwAX-7-QXY&_nc_ht=scontent-ham3-1.xx&oh=00_AT-5GJS2QFCaFNJEeHDoVLmhPnL9LF-diIB6L1sFhn76Dw&oe=61F8B18A');  background-size: cover; background-position: center;")
-                   )
+                   ,align = "center")
                  ),
                  fixedRow(
-                   column(1,offset = 3,actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
+                   column(12,actionButton(inputId = "button_j", label = NULL, style = "width: 150px; height: 150px;
                     background: url('https://scontent-ham3-1.xx.fbcdn.net/v/t1.6435-9/123193344_2840269192876438_7586431629465567622_n.jpg?_nc_cat=103&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=b5KeJi9WozQAX93Qn0Q&_nc_ht=scontent-ham3-1.xx&oh=00_AT-7Dk8EPiY94-U98NLYzsLvZWlYMCE9CJk_DkxG238MyQ&oe=61F76FDD');  background-size: cover; background-position: center;")
-                   )
+                   ,align = "center")
                  )
     ),
     mainPanel(
@@ -246,28 +246,27 @@ ui3 <- fluidPage(
   tabsetPanel(
     tabPanel("Utwory, artyści i gatunki",
        fluidRow(
-         titlePanel("Zgodność utworów i artystów"),
-         align="center"
+         column(12,h3("Zgodność utworów i artystów",align="center"))
       ),
-      column(
+      fluidRow(
+      column(h4("Procent wspólnych utworów",align="center"),
         plotOutput("plot4") %>% withSpinner(type=2, color.background="White"),
         width=6
       ),
-      column(
+      column(h4("Procent wspólnych artystów",align="center"),
         plotOutput("plot5") %>% withSpinner(type=2, color.background="White"),
         width=6
+      )),
+      fluidRow(
+        column(12,h3("Ulubione gatunki muzyczne",align="center"))
       ),
       fluidRow(
-        titlePanel("Ulubione gatunki muzyczne"),
-        align="center"
-      ),
-      fluidRow(
-        plotOutput("genres", height=900, width=900) %>% withSpinner(type=2, color.background="White"),
-        align="center"
+        column(12,plotOutput("genres", height=900, width=900) %>% withSpinner(type=2, color.background="White"),
+        align="center")
         )
     ),
     tabPanel("Cechy ulubionych utworów",
-      titlePanel("Średnie cechy ulubionych utworów"),
+      titlePanel("Cechy ulubionych utworów"),
       sidebarLayout(
         sidebarPanel(
           width=3,
@@ -276,6 +275,7 @@ ui3 <- fluidPage(
                       value=10,
                       min=2,
                       max=50),
+          hr(),
           h4("Taneczność - jak bardzo utwór nadaje się do tańczenia, im większa
              wartość, tym bardziej się nadaje"),
           h4("Energia - miara intensywności i aktywności utworu, utwory o
@@ -363,9 +363,13 @@ server <- function(input, output) {
       group_by(user) %>% 
       mutate(totalTime = sum(msPlayed)) %>% 
       group_by(user, hour) %>% 
-      summarise(avgTime = sum(msPlayed)/totalTime ) %>% 
+      summarise(avgTime = sum(msPlayed)/totalTime )%>%
+      mutate(Użytkownik = case_when(user == "l" ~ "Łukasz",
+                                    user == "j" ~ "Janek",
+                                    user == "p" ~ "Patryk"),`Średni czas` = avgTime,
+             Godzina = hour) %>% 
       ggplot() +
-      geom_line(aes(x=hour, y=avgTime, color = user), size=1.75) +
+      geom_line(aes(x=Godzina, y=`Średni czas`, color = Użytkownik), size=1.75) +
       theme_bw() +
       labs(
         x="Godzina",
@@ -540,7 +544,6 @@ server <- function(input, output) {
       geom_col(aes(x=who, y=perc), fill="lightblue") +
       theme_bw() +
       labs(
-        title="Procent wspólnych utworów",
         x="Pomiędzy kim",
         y="Procent zgodności"
       ) +
@@ -578,7 +581,6 @@ server <- function(input, output) {
       geom_col(aes(x=who, y=perc), fill="lightblue") +
       theme_bw() +
       labs(
-        title="Procent wspólnych artystów",
         x="Pomiędzy kim",
         y="Procent zgodności"
       ) + 
@@ -763,23 +765,24 @@ app_ui <- navbarPage(
              tabPanel("Tabela", ui2a, icon = icon("table")),
              icon = icon("heart")),
   tabPanel("Zgodność muzyki", ui3, icon = icon("handshake")),
+  theme = bslib::bs_theme(bootswatch = "cosmo"),
   footer = shiny::HTML('<footer class="text-center text-sm-start" style="width:100%;">
   <hr>
               <span style="font-weight: bold">Autorzy:<span/>
               <br/>
               <span style="font-weight: bold">Patryk Rakus<span/>
               <a href="https://github.com/rakusp">
-                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width = "1.5%" height = "1.5%">
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width="20" height="20">
               </a>
               <br/>
               <span style="font-weight: bold">Jan Skwarek<span/>
               <a href="https://github.com/janskwr">
-                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width = "1.5%" height = "1.5%">
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width="20" height="20">
               </a>
               <br/>
               <span style="font-weight: bold">Łukasz Tomaszewski<span/>
               <a href="https://github.com/tomaszewskil">
-                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width = "1.5%" height = "1.5%">
+                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="github logo" width="20" height="20">
               </a>
               </div>
               
