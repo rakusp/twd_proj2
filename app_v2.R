@@ -51,14 +51,23 @@ streaming <- bind_rows("p"=p_streaming, "j"=j_streaming, "l"=l_streaming,
                        .id="user")
 streaming <- fix_streaming(streaming)
 
+streaming <-
+streaming %>% 
+  mutate(season = case_when(
+    month %in% c('12', '1', '2') ~ 'Winter',
+    month %in% c('3', '4', '5') ~ 'Spring',
+    month %in% c('6', '7', '8') ~ 'Summer',
+    month %in% c('9', '10', '11') ~ 'Fall'
+  ))
+
 p_streaming <- fix_streaming(p_streaming)
 j_streaming <- fix_streaming(j_streaming)
 l_streaming <- fix_streaming(l_streaming)
 
 artists <- read.csv("data/artistID")
 tracks <- read.csv("data/trackID")
-popArtist<- read.csv("data/artistPop")
-popTrack <- read.csv("data/trackPopDuration")
+popArtist<- read.csv("data/artistPop", check.names = F)
+popTrack <- read.csv("data/trackPopDuration", check.names = F)
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
@@ -98,10 +107,23 @@ ui1 <- fluidPage(
                          choiceNames=c("Patryk", "Łukasz", "Janek"),
                          choiceValues=c("p", "l", "j"),
                          selected=c("p", "l", "j")
+      ),
+      sliderInput("month",
+                  "Wybierz miesiąc:",
+                  min = 1,
+                  max = 12,
+                  value = 6
+                  ),
+      hr(),
+      checkboxGroupInput("season", "Wybierz porę roku:",
+                         choiceNames=c("Wiosna", "Lato", "Jesień", "Zima"),
+                         choiceValues=c("Spring", "Summer", "Fall", "Winter"),
+                         selected=c("Spring", "Summer", "Fall", "Winter")
       )
     ),
     mainPanel(
-      plotOutput("plot1")
+      plotOutput("plot1"),
+      plotOutput("plot1b")
     )
   )
 )
@@ -336,13 +358,14 @@ server <- function(input, output) {
   
   output$plot1 <- renderPlot({
     p <- streaming %>% 
-      filter(user %in% input$who) %>% 
+      filter(user %in% input$who) %>%
+      filter(season %in% input$season) %>%
       group_by(user) %>% 
       mutate(totalTime = sum(msPlayed)) %>% 
       group_by(user, hour) %>% 
       summarise(avgTime = sum(msPlayed)/totalTime ) %>% 
       ggplot() +
-      geom_line(aes(x=hour, y=avgTime, color=user), size=1.75) +
+      geom_line(aes(x=hour, y=avgTime, color = user), size=1.75) +
       theme_bw() +
       labs(
         x="Godzina",
@@ -358,6 +381,32 @@ server <- function(input, output) {
     
     p
   })
+  
+  output$plot1b <- renderPlot({
+    pes <- streaming %>%
+      filter(month %in% input$month) %>%
+      group_by(month) %>% 
+      mutate(totalTime = sum(msPlayed)) %>% 
+      group_by(month, hour) %>% 
+      summarise(avgTime = sum(msPlayed)/totalTime ) %>% 
+      ggplot() +
+      geom_line(aes(x=hour, y=avgTime), size=1.75) +
+      theme_bw() +
+      labs(
+        x="Godzina",
+        y="Procent całkowitego czasu słuchania"
+      ) +
+      scale_y_continuous(expand=expansion(add=c(0, 0.0058)),
+                         breaks=seq(0, 0.13, by=0.01)) +
+      scale_x_continuous(expand=c(0, 0, 0, 0),
+                         breaks=seq(0, 23, by=1)) +
+      theme(panel.grid.major.y = element_line(linetype=5),
+            panel.grid.minor.y = element_blank(),
+            panel.grid.minor.x = element_blank())
+    
+    pes
+  })
+  
   
   output$plot2 <- plotly::renderPlotly({
     if(input$kategoria == "Wykonawcy"){
