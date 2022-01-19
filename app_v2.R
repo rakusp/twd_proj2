@@ -126,50 +126,81 @@ all_mood <-
     month %in% c('9', '10', '11') ~ 'Fall'
   ))
 
+
 ui1 <- fluidPage(
-  
-  titlePanel("W jakich godzinach najwięcej słuchamy muzyki?"),
-  
-  sidebarLayout(
-    sidebarPanel(
-      checkboxGroupInput("who", "Wybierz osoby:",
-                         choiceNames=c("Patryk", "Łukasz", "Janek"),
-                         choiceValues=c("p", "l", "j"),
-                         selected=c("p", "l", "j")
-      ),
-      #sliderInput("month",
-      #            "Wybierz miesiąc:",
-      #            min = 1,
-      #            max = 12,
-      #            value = 6
-      #            ),
-      #hr(),
-      checkboxGroupInput("season", "Wybierz porę roku:",
-                         choiceNames=c("Wiosna", "Lato", "Jesień", "Zima"),
-                         choiceValues=c("Spring", "Summer", "Fall", "Winter"),
-                         selected=c("Spring", "Summer", "Fall", "Winter")
-      ),
-      selectInput("stats", "Wybierz nastrój:",
-                  c("Taneczność",
-                    "Energia",
-                    "Akustyczność",
-                    "Wartościowość",
-                    "Mowa"),
-                  c("danceability",
-                    "energy",
-                    "acousticness",
-                    "valence",
-                    "speechiness"),
-      )
+  h1("Jak zmieniała się słuchana przez nas muzyka w zależności od pory roku?",align= "center"),
+  hr(),
+  fluidRow(
+    column(4,checkboxGroupInput("who", "Wybierz osoby:",
+                                           choiceNames=c("Patryk", "Łukasz", "Janek"),
+                                           choiceValues=c("p", "l", "j"),
+                                           selected=c("p", "l", "j")),
+           align = "center"),
+    column(4,selectInput("stats", "Wybierz nastrój:",
+                         choices=c("Taneczność" = "danceability",
+                                   "Energia" = "energy",
+                                   "Akustyczność" = "acousticness",
+                                   "Wartościowość" = "valence",
+                                   "Mowa" = "speechiness")
+    ),align = "center"),
+    column(4,checkboxGroupInput("season", "Wybierz porę roku:",
+                                           choiceNames=c("Wiosna", "Lato", "Jesień", "Zima"),
+                                           choiceValues=c("Spring", "Summer", "Fall", "Winter"),
+                                           selected=c("Spring", "Summer", "Fall", "Winter")
+    ),align = "center")
     ),
-    mainPanel(
-      plotOutput("plot1"),
-      #plotOutput("plot1b")
-      plotOutput("feelings")
+  hr(),
+  fluidRow(
+    
+  column(12,
+         conditionalPanel(condition = "input.stats == 'danceability'",
+                             h3("Rozkład taneczności słuchanych przez nas utworów",
+                                align = "center")
+  ),
+  conditionalPanel(
+    condition = "input.stats == 'energy'",
+    h3("Rozkład energii słuchanych przez nas utworów", align = "center")),
+  
+  conditionalPanel(condition = "input.stats == 'acousticness'",
+                   h3("Rozkład akustyczności słuchanych przez nas utworów", align = "center")
+  ),
+  conditionalPanel(
+    condition = "input.stats == 'valence'",
+    h3("Rozkład wartościowości słuchanych przez nas utworów", align = "center")),
+  
+  conditionalPanel(condition = "input.stats == 'speechiness'",
+                   h3("Rozkład mowy słuchanych przez nas utworów", align = "center")
+  ),
+  plotly::plotlyOutput("feelings")%>% withSpinner(type=2, color.background="White"))),
+  fluidRow(
+    column(12,
+  conditionalPanel(condition = "input.stats == 'danceability'",
+                   h5("Taneczność - jak bardzo utwór nadaje się do tańczenia, im większa
+             wartość, tym bardziej się nadaje", align = "center")
+  ),
+  conditionalPanel(
+    condition = "input.stats == 'energy'",
+    h5("Energia - miara intensywności i aktywności utworu, utwory o
+             wysokiej wartości są zwykle szybkie i głośne", align = "center")),
+  
+  conditionalPanel(condition = "input.stats == 'acousticness'",
+                   h5("Akustyczność - miara jak akustyczny jest utwór", align = "center")
+  ),
+  conditionalPanel(
+    condition = "input.stats == 'valence'",
+    h5("Wartościowość - miara jak muzycznie pozytywny jest utwór, utwory
+             o wysokiej wartości są zwykle wesołe, natomiast o niskiej smutne", align = "center")),
+  
+  conditionalPanel(condition = "input.stats == 'speechiness'",
+                   h5("Mowa - im w utworze bardziej dominują słowa, tym większa jest
+             wartość", align = "center")
+  )
     )
-  ))
-
-
+),hr(),
+fluidRow(
+  column(12,h3("W jakich godzinach najczęściej słuchamy muzyki?", align = "center"),
+         plotOutput("plot1")%>% withSpinner(type=2, color.background="White")))
+)
 
 
 ui2 <- fluidPage(
@@ -181,19 +212,19 @@ ui2 <- fluidPage(
     h1("Wykresy przedstawiające ulubione utwory", align = "center")),
   hr(),
   fluidRow(
-    column(3,offset = 1,selectInput("kategoria",
+    column(4,selectInput("kategoria",
                                     "Wybierz kategorię:",
-                                    c("Wykonawcy","Utwory"))),
-    column(3,offset = 1,sliderInput("n", 
+                                    c("Wykonawcy","Utwory")),align = "center"),
+    column(4,sliderInput("n", 
                                     label = "Ilość:", 
                                     value = 5,
                                     min = 1,
-                                    max = 10)
+                                    max = 10),align = "center"
     ),
-    column(3,offset = 1,checkboxGroupInput("who2", "Wybierz osoby:",
+    column(4,checkboxGroupInput("who2", "Wybierz osoby:",
                                            choiceNames=c("Patryk", "Łukasz", "Janek"),
                                            choiceValues=c("p", "l", "j"),
-                                           selected=c("p", "l", "j"))
+                                           selected=c("p", "l", "j")),align = "center"
     )
   ),
   hr(),
@@ -308,7 +339,6 @@ ui3 <- fluidPage(
         )
     ),
     tabPanel("Cechy ulubionych utworów",
-      titlePanel("Cechy ulubionych utworów"),
       sidebarLayout(
         sidebarPanel(
           width=3,
@@ -329,7 +359,8 @@ ui3 <- fluidPage(
              wartość")
         ),
         mainPanel(
-          plotOutput("spider")
+          column(12,h3("Cechy naszych ulubionych utworów"), align = "center"),
+          plotOutput("spider") %>% withSpinner(type=2, color.background="White")
         )
       )
     )
@@ -796,30 +827,75 @@ server <- function(input, output) {
     
   })
   
-  output$feelings <- renderPlot({
-    
-    val = input$stats
+  output$feelings <- plotly::renderPlotly({
     
     pog <- all_mood %>% 
       filter(user %in% input$who) %>%
-      filter(season %in% input$season) %>%
-      group_by(user) %>% 
-      mutate(totalEnergic = sum(all_mood$input$stats)) %>% 
-      group_by(user, hour) %>% 
-      summarise(avgRate = sum(energy)/totalEnergic )%>%
-      mutate(Użytkownik = case_when(user == "l" ~ "Łukasz",
-                                    user == "j" ~ "Janek",
-                                    user == "p" ~ "Patryk"),`Średni współczynnik dla danego nastroju` = avgRate,
-             Godzina = hour) %>% 
-      ggplot() +
-      geom_line(aes(x=Godzina, y=`Średni współczynnik dla danego nastroju`, color = Użytkownik), size=1.75) +
-      theme_bw()
-    pog
+      filter(season %in% input$season) 
+    
+    if(input$stats == "danceability"){
+      pog <- pog %>% mutate(Kategoria = danceability)
+      ggplot(pog, aes(x= Kategoria)) + geom_histogram(binwidth = 0.05) +
+        theme_bw() +
+        labs(
+          x="Taneczność",
+          y="Ilość"
+        ) + 
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    }else if(input$stats == "energy"){
+      pog <- pog %>% mutate(Kategoria = energy)
+      ggplot(pog, aes(x= Kategoria)) + geom_histogram(binwidth = 0.05) +
+        theme_bw() +
+        labs(
+          x="Energia",
+          y="Ilość"
+        ) + 
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    }else if(input$stats == "acousticness"){
+      pog <- pog %>% mutate(Kategoria = acousticness)
+      ggplot(pog, aes(x= Kategoria)) + geom_histogram(binwidth = 0.05) +
+        theme_bw() +
+        labs(
+          x="Akustyczność",
+          y="Ilość"
+        ) + 
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    }else if(input$stats == "valence"){
+      pog <- pog %>% mutate(Kategoria = valence)
+      ggplot(pog, aes(x= Kategoria)) + geom_histogram(binwidth = 0.05) +
+        theme_bw() +
+        labs(
+          x="Wartościowość",
+          y="Ilość"
+        ) + 
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    }else if(input$stats == "speechiness"){
+      pog <- pog %>% mutate(Kategoria = speechiness)
+      ggplot(pog, aes(x= Kategoria)) + geom_histogram(binwidth = 0.05) +
+        theme_bw() +
+        labs(
+          x="Mowa",
+          y="Ilość"
+        ) + 
+        theme(panel.grid.major.y = element_line(linetype=5),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank())
+    }
 })
+  
+  
 }
 app_ui <- navbarPage(
   title="Spotify",
-  tabPanel("Godziny słuchania", ui1, icon = icon("clock")),
+  tabPanel("Pory roku a nasza muzyka", ui1, icon = icon("clock")),
   navbarMenu("Najczęściej słuchane", 
              tabPanel("Wykresy", ui2, icon = icon("chart-line")),
              tabPanel("Tabela", ui2a, icon = icon("table")),
