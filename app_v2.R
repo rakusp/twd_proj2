@@ -3,16 +3,15 @@ library(dplyr)
 library(plotly)
 library(ggplot2)
 library(gganimate)
-library(spotifyr)
 library(DT)
 library(VennDiagram)
 library(shinycssloaders)
 library(fmsb)
+library(httr)
 
 source("functions.R")
 source("connectapi.R")
 
-library(httr)
 
 # przekopiować z password.txt
 clientID = '28e3d7ae0359454888cc25815aa18732'
@@ -37,9 +36,6 @@ HeaderValue = paste0('Bearer ', mytoken)
 # response2 = GET(url = URI, add_headers(Authorization = HeaderValue))
 # Artist = content(response2)
 # Artist$followers$total   -->  liczba followersów ReTo
-
-
-connect_with_api("28e3d7ae0359454888cc25815aa18732", "c0f866dbe2db4388b51d5f1f714ca8be") # oba z pliku password.txt
 
 p_streaming <- read_json("data/patryk/StreamingHistory0.json")
 j_streaming <- bind_rows(read_json("data/janek/StreamingHistory0.json"),
@@ -66,8 +62,8 @@ l_streaming <- fix_streaming(l_streaming)
 
 artists <- read.csv("data/artistID")
 tracks <- read.csv("data/trackID")
-popArtist<- read.csv("data/artistPop", check.names = F)
-popTrack <- read.csv("data/trackPopDuration", check.names = F)
+popArtist<- read.csv("data/artistPop")
+popTrack <- read.csv("data/trackPopDuration")
 
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 
