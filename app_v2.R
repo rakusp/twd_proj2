@@ -344,14 +344,14 @@ ui3 <- fluidPage(
                       min=2,
                       max=50),
           hr(),
-          h4("Taneczność - jak bardzo utwór nadaje się do tańczenia, im większa
+          h6("Taneczność - jak bardzo utwór nadaje się do tańczenia, im większa
              wartość, tym bardziej się nadaje"),
-          h4("Energia - miara intensywności i aktywności utworu, utwory o
+          h6("Energia - miara intensywności i aktywności utworu, utwory o
              wysokiej wartości są zwykle szybkie i głośne"),
-          h4("Akustyczność - miara jak akustyczny jest utwór"),
-          h4("Wartościowość - miara jak muzycznie pozytywny jest utwór, utwory
+          h6("Akustyczność - miara jak akustyczny jest utwór"),
+          h6("Wartościowość - miara jak muzycznie pozytywny jest utwór, utwory
              o wysokiej wartości są zwykle wesołe, natomiast o niskiej smutne"),
-          h4("Mowa - im w utworze bardziej dominują słowa, tym większa jest
+          h6("Mowa - im w utworze bardziej dominują słowa, tym większa jest
              wartość")
         ),
         mainPanel(
@@ -794,10 +794,10 @@ server <- function(input, output) {
     j_af <- temp(j_streaming, input$top)
     l_af <- temp(l_streaming, input$top)
     
-    par(mar=c(0, 0.8, 4, 0))
+    par(mar=c(0, 2, 4, 2))
     par(mfrow=c(1,3))
     radarchart(p_af, axistype=4, plwd=4, plty=1, cglcol="darkgray", cglty=1,
-               cglwd=1, vlcex=1.6, calcex=0.8, cex.main=3,
+               cglwd=1, vlcex=1.35, calcex=0.8, cex.main=3,
                vlabels=c("Taneczność", "Energia", "Akustyczność",
                           "Wartościowość", "Mowa"),
                axislabcol="darkgray",
@@ -805,7 +805,7 @@ server <- function(input, output) {
                pfcol=rgb(0.3, 0.8, 0.8, 0.3),
                title="Patryk")
     radarchart(j_af, axistype=4, plwd=4, plty=1, cglcol="darkgray", cglty=1,
-               cglwd=1, vlcex=1.6, calcex=0.8, cex.main=3,
+               cglwd=1, vlcex=1.35, calcex=0.8, cex.main=3,
                vlabels=c("Taneczność", "Energia", "Akustyczność",
                          "Wartościowość", "Mowa"),
                axislabcol="darkgray",
@@ -813,7 +813,7 @@ server <- function(input, output) {
                pfcol=rgb(0, 0.75, 0.2, 0.3),
                title="Janek")
     radarchart(l_af, axistype=4, plwd=4, plty=1, cglcol="darkgray", cglty=1,
-               cglwd=1, vlcex=1.6, calcex=0.8, cex.main=3,
+               cglwd=1, vlcex=1.35, calcex=0.8, cex.main=3,
                vlabels=c("Taneczność", "Energia", "Akustyczność",
                          "Wartościowość", "Mowa"),
                axislabcol="darkgray",
