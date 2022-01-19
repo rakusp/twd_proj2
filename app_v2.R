@@ -96,6 +96,35 @@ getArtistInfo <- function(artist_name) {
   content(response2)
 }
 
+tempxd <- function(streaming) {
+  streaming %>% 
+    #group_by(artistName, trackName) %>%
+    #summarise(totalTime = sum(msPlayed), .groups="drop") 
+    #arrange(-totalTime) %>% 
+    #select(artistName, trackName, totalTime) %>% 
+    # unique() %>% 
+    inner_join(trackInfo, by=c("trackName", "artistName"))
+    #select(year, month, minute, hour, danceability, energy, acousticness, valence, speechiness)
+    #mutate_all(mean)
+    #head(1) -> x
+  
+  #rbind(rep(1,5), rep(0,5), x)
+}
+
+p_mood <- tempxd(p_streaming)
+j_mood <- tempxd(j_streaming)
+l_mood <- tempxd(l_streaming)
+all_mood <- bind_rows("p"=p_mood, "j"=j_mood, "l"=l_mood,
+                       .id="user")
+
+all_mood <-
+  all_mood %>% 
+  mutate(season = case_when(
+    month %in% c('12', '1', '2') ~ 'Winter',
+    month %in% c('3', '4', '5') ~ 'Spring',
+    month %in% c('6', '7', '8') ~ 'Summer',
+    month %in% c('9', '10', '11') ~ 'Fall'
+  ))
 
 ui1 <- fluidPage(
   
@@ -108,25 +137,38 @@ ui1 <- fluidPage(
                          choiceValues=c("p", "l", "j"),
                          selected=c("p", "l", "j")
       ),
-      sliderInput("month",
-                  "Wybierz miesiąc:",
-                  min = 1,
-                  max = 12,
-                  value = 6
-                  ),
-      hr(),
+      #sliderInput("month",
+      #            "Wybierz miesiąc:",
+      #            min = 1,
+      #            max = 12,
+      #            value = 6
+      #            ),
+      #hr(),
       checkboxGroupInput("season", "Wybierz porę roku:",
                          choiceNames=c("Wiosna", "Lato", "Jesień", "Zima"),
                          choiceValues=c("Spring", "Summer", "Fall", "Winter"),
                          selected=c("Spring", "Summer", "Fall", "Winter")
+      ),
+      selectInput("stats", "Wybierz nastrój:",
+                  c("Taneczność",
+                    "Energia",
+                    "Akustyczność",
+                    "Wartościowość",
+                    "Mowa"),
+                  c("danceability",
+                    "energy",
+                    "acousticness",
+                    "valence",
+                    "speechiness"),
       )
     ),
     mainPanel(
       plotOutput("plot1"),
-      plotOutput("plot1b")
+      #plotOutput("plot1b")
+      plotOutput("feelings")
     )
-  )
-)
+  ))
+
 
 
 
@@ -754,9 +796,27 @@ server <- function(input, output) {
     
   })
   
-  
+  output$feelings <- renderPlot({
+    
+    val = input$stats
+    
+    pog <- all_mood %>% 
+      filter(user %in% input$who) %>%
+      filter(season %in% input$season) %>%
+      group_by(user) %>% 
+      mutate(totalEnergic = sum(all_mood$input$stats)) %>% 
+      group_by(user, hour) %>% 
+      summarise(avgRate = sum(energy)/totalEnergic )%>%
+      mutate(Użytkownik = case_when(user == "l" ~ "Łukasz",
+                                    user == "j" ~ "Janek",
+                                    user == "p" ~ "Patryk"),`Średni współczynnik dla danego nastroju` = avgRate,
+             Godzina = hour) %>% 
+      ggplot() +
+      geom_line(aes(x=Godzina, y=`Średni współczynnik dla danego nastroju`, color = Użytkownik), size=1.75) +
+      theme_bw()
+    pog
+})
 }
-
 app_ui <- navbarPage(
   title="Spotify",
   tabPanel("Godziny słuchania", ui1, icon = icon("clock")),
