@@ -136,14 +136,14 @@ ui1 <- fluidPage(
                                            choiceValues=c("p", "l", "j"),
                                            selected=c("p", "l", "j")),
            align = "center"),
-    column(4,selectInput("stats", "Wybierz nastrój:",
+    column(4,selectInput("stats", "Wybierz kategorię:",
                          choices=c("Taneczność" = "danceability",
                                    "Energia" = "energy",
                                    "Akustyczność" = "acousticness",
                                    "Wartościowość" = "valence",
                                    "Mowa" = "speechiness")
     ),align = "center"),
-    column(4,checkboxGroupInput("season", "Wybierz porę roku:",
+    column(4,checkboxGroupInput("season", "Wybierz pory roku:",
                                            choiceNames=c("Wiosna", "Lato", "Jesień", "Zima"),
                                            choiceValues=c("Spring", "Summer", "Fall", "Winter"),
                                            selected=c("Spring", "Summer", "Fall", "Winter")
